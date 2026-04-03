@@ -4,6 +4,8 @@ interface Props {
   segments: Segment[];
   onSelect: (segment: Segment) => void;
   loading: boolean;
+  error?: string | null;
+  hasSearched?: boolean;
 }
 
 function formatTime(seconds: number): string {
@@ -12,7 +14,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function RecommendationList({ segments, onSelect, loading }: Props) {
+export default function RecommendationList({ segments, onSelect, loading, error, hasSearched }: Props) {
   if (loading) {
     return (
       <div className="text-gray-400 text-center py-8 animate-pulse">
@@ -21,10 +23,31 @@ export default function RecommendationList({ segments, onSelect, loading }: Prop
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-red-400 text-center py-6 text-sm">
+        <p className="font-medium mb-1">Search failed</p>
+        <p className="text-red-500 text-xs">{error}</p>
+      </div>
+    );
+  }
+
+  if (hasSearched && segments.length === 0) {
+    return (
+      <div className="text-gray-400 text-center py-6 text-sm">
+        <p className="font-medium mb-1">No similar segments found</p>
+        <p className="text-gray-500 text-xs">
+          Only videos with generated chapters can be searched.
+          Try a different query or wait for more videos to be indexed.
+        </p>
+      </div>
+    );
+  }
+
   if (segments.length === 0) {
     return (
-      <div className="text-gray-400 text-center py-8">
-        Click a chapter or search to find similar segments.
+      <div className="text-gray-500 text-center py-8 text-sm">
+        Search or click a chapter to find similar segments.
       </div>
     );
   }
@@ -46,8 +69,11 @@ export default function RecommendationList({ segments, onSelect, loading }: Prop
           )}
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium text-white truncate">
-              {seg.video_title || seg.video_id}
+              {seg.chapter_title || seg.video_title || seg.video_id}
             </div>
+            {seg.video_title && seg.chapter_title && (
+              <div className="text-xs text-gray-500 truncate">{seg.video_title}</div>
+            )}
             <div className="text-xs text-gray-400 mt-1">
               {formatTime(seg.start)} - {formatTime(seg.end)}
             </div>

@@ -4,7 +4,7 @@ import threading
 import logging
 import time
 
-from backend.services import cache, video_service, twelvelabs_service
+from backend.services import cache, video_service, twelvelabs_service, search, thumbnails
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,12 @@ def _seed_worker():
         logger.info(f"{len(unindexed)} videos need indexing. Retrying in background...")
         _retry_indexing(index_id, unindexed)
 
-    logger.info("Seeding complete.")
+    logger.info("Seeding complete. Embedding chapters...")
+    search.embed_all_chapters()
+
+    # Generate thumbnails for all cached chapters
+    logger.info("Generating chapter thumbnails...")
+    thumbnails.generate_all_missing()
 
 
 def _retry_indexing(index_id: str, videos: list[dict]):

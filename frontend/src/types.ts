@@ -23,4 +23,5 @@ export interface Segment {
   score: number;
   thumbnail_url: string | null;
   video_title: string | null;
+  chapter_title: string | null;
 }

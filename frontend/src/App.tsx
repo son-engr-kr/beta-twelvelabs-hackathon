@@ -21,6 +21,8 @@ export default function App() {
   const [ingestUrl, setIngestUrl] = useState('');
   const [loading, setLoading] = useState({ ingest: false, chapters: false, search: false, autoRec: false });
   const [error, setError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const [showIndexedOnly, setShowIndexedOnly] = useState(true);
   const lastAutoRecChapter = useRef<number | null>(null);
 
@@ -108,11 +110,12 @@ export default function App() {
 
   const handleSearch = useCallback(
     (query: string) => {
-      setError(null);
+      setSearchError(null);
+      setHasSearched(true);
       setLoading((l) => ({ ...l, search: true }));
       recommend(query, selectedVideo?.video_id)
         .then(setSearchResults)
-        .catch((e) => setError(e.message))
+        .catch((e) => setSearchError(e.message))
         .finally(() => setLoading((l) => ({ ...l, search: false })));
     },
     [selectedVideo]
@@ -230,6 +233,8 @@ export default function App() {
                       segments={searchResults}
                       onSelect={handleSegmentSelect}
                       loading={loading.search}
+                      error={searchError}
+                      hasSearched={hasSearched}
                     />
                   </div>
                 </div>

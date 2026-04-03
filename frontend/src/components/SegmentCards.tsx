@@ -66,7 +66,12 @@ export default function SegmentCards({ segments, onSelect, loading, title }: Pro
             </div>
             <div className="mt-2 px-1">
               <div className="text-sm font-medium text-gray-200 line-clamp-2 group-hover:text-white">
-                {seg.video_title || 'Related segment'}
+                {seg.chapter_title || seg.video_title || 'Related segment'}
+              </div>
+              <div className="text-xs text-gray-500 mt-0.5">
+                {seg.video_title && seg.chapter_title && (
+                  <span className="text-gray-400">{seg.video_title}</span>
+                )}
               </div>
               <div className="text-xs text-gray-500 mt-0.5">
                 {formatTime(seg.start)} - {formatTime(seg.end)}

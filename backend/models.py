@@ -40,3 +40,4 @@ class Segment(BaseModel):
     score: float
     thumbnail_url: str | None = None
     video_title: str | None = None
+    chapter_title: str | None = None
