@@ -86,7 +86,7 @@ def search_segments(query: str, exclude_video_id: str | None = None, top_k: int 
             doc_text = f"{ch.get('title', '')} {ch.get('summary', '')}"
             doc_tokens = _tokenize(doc_text)
 
-            # Try embedding similarity first
+            # Hybrid: embedding similarity + keyword boost
             score = 0.0
             key = _chapter_cache_key(vid, i)
             ch_vec = embeddings._load_cached(key)
@@ -94,17 +94,21 @@ def search_segments(query: str, exclude_video_id: str | None = None, top_k: int 
             if query_vec and ch_vec:
                 score = embeddings.cosine_similarity(query_vec, ch_vec)
             else:
-                # Text fallback
                 score = _text_score(query_tokens, doc_tokens)
 
-            # Skip intro/outro segments
-            title_lower = ch.get("title", "").lower()
-            if any(skip in title_lower for skip in ["intro", "outro", "opening", "closing", "copyright", "logo"]):
-                continue
-            if ch["start"] < 10:
+            # Keyword boost: reward exact keyword matches, penalize missing
+            keyword_matches = sum(1 for t in query_tokens if t in doc_tokens)
+            keyword_ratio = keyword_matches / len(query_tokens) if query_tokens else 0
+            score = score * 0.6 + keyword_ratio * 0.4
+
+            # Skip pure intro/outro segments (exact or near-exact matches only)
+            title_lower = ch.get("title", "").strip().lower()
+            skip_titles = ["intro", "outro", "opening", "closing", "copyright", "logo",
+                           "intro logo", "ad", "sponsor", "sponsorship"]
+            if title_lower in skip_titles:
                 continue
 
-            if score > 0.4:
+            if score > 0.3:
                 results.append({
                     "video_id": vid,
                     "tl_video_id": video.get("tl_video_id", ""),
