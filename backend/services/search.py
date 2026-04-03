@@ -97,7 +97,14 @@ def search_segments(query: str, exclude_video_id: str | None = None, top_k: int 
                 # Text fallback
                 score = _text_score(query_tokens, doc_tokens)
 
-            if score > 0.05:
+            # Skip intro/outro segments
+            title_lower = ch.get("title", "").lower()
+            if any(skip in title_lower for skip in ["intro", "outro", "opening", "closing", "copyright", "logo"]):
+                continue
+            if ch["start"] < 10:
+                continue
+
+            if score > 0.4:
                 results.append({
                     "video_id": vid,
                     "tl_video_id": video.get("tl_video_id", ""),
