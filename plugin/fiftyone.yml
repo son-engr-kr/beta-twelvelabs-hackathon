@@ -4,3 +4,4 @@ description: Segment-level video recommendation plugin powered by Twelve Labs AP
 url: https://github.com/your-org/video-understanding-plugin
 operators:
   - FindSimilarSegments
+  - IngestVideo

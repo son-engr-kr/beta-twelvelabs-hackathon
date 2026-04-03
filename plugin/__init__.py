@@ -65,5 +65,55 @@ class FindSimilarSegments(foo.Operator):
         return foo.types.Property(outputs)
 
 
+class IngestVideo(foo.Operator):
+    @property
+    def config(self):
+        return foo.OperatorConfig(
+            name="ingest_video",
+            label="Ingest Video to SegRec",
+            description="Add a YouTube video to SegRec — indexes with Twelve Labs and generates chapters",
+        )
+
+    def resolve_input(self, ctx):
+        inputs = foo.types.Object()
+        inputs.str(
+            "url",
+            label="YouTube URL",
+            description="YouTube video URL to ingest",
+            required=True,
+        )
+        return foo.types.Property(inputs)
+
+    def execute(self, ctx):
+        url = ctx.params["url"]
+
+        payload = json.dumps({"url": url}).encode()
+        req = urllib.request.Request(
+            f"{BACKEND_URL}/api/videos/ingest",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            resp = urllib.request.urlopen(req, timeout=60)
+            video = json.loads(resp.read().decode())
+            return {
+                "status": "success",
+                "title": video.get("title", "Unknown"),
+                "video_id": video.get("video_id", ""),
+                "duration": f"{video.get('duration', 0) // 60}m {video.get('duration', 0) % 60}s",
+            }
+        except Exception as e:
+            return {"status": "error", "title": str(e), "video_id": "", "duration": ""}
+
+    def resolve_output(self, ctx):
+        outputs = foo.types.Object()
+        outputs.str("status", label="Status")
+        outputs.str("title", label="Video Title")
+        outputs.str("video_id", label="Video ID")
+        outputs.str("duration", label="Duration")
+        return foo.types.Property(outputs)
+
+
 def register(plugin):
     plugin.register(FindSimilarSegments)
+    plugin.register(IngestVideo)
