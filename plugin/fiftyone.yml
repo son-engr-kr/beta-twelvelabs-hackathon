@@ -1,0 +1,6 @@
+name: video-understanding-plugin
+version: 0.1.0
+description: Video understanding plugin powered by Twelve Labs API
+url: https://github.com/your-org/video-understanding-plugin
+operators:
+  - VideoUnderstandingOperator
