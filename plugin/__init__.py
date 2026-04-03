@@ -1,46 +1,69 @@
+import json
 import os
+import urllib.request
 
-from dotenv import load_dotenv
-import fiftyone as fo
 import fiftyone.operators as foo
-from twelvelabs import TwelveLabs
+from dotenv import load_dotenv
 
 load_dotenv()
 
+BACKEND_URL = os.environ.get("SEGREG_BACKEND_URL", "http://127.0.0.1:8000")
 
-class VideoUnderstandingOperator(foo.Operator):
+
+class FindSimilarSegments(foo.Operator):
     @property
     def config(self):
         return foo.OperatorConfig(
-            name="video_understanding",
-            label="Video Understanding (Twelve Labs)",
-            description="Analyze videos using Twelve Labs API",
+            name="find_similar_segments",
+            label="Find Similar Segments",
+            description="Search for similar video segments using Twelve Labs",
         )
 
     def resolve_input(self, ctx):
         inputs = foo.types.Object()
-        inputs.str("prompt", label="Prompt", description="What to analyze in the video")
+        inputs.str(
+            "query",
+            label="Search Query",
+            description="Describe the segment you're looking for",
+            required=True,
+        )
+        inputs.int("top_k", label="Number of Results", default=5)
         return foo.types.Property(inputs)
 
     def execute(self, ctx):
-        prompt = ctx.params.get("prompt", "Describe this video.")
+        query = ctx.params["query"]
+        top_k = ctx.params.get("top_k", 5)
 
-        api_key = os.environ["TWELVELABS_API_KEY"]
-        client = TwelveLabs(api_key=api_key)
+        payload = json.dumps({"query": query, "top_k": top_k}).encode()
+        req = urllib.request.Request(
+            f"{BACKEND_URL}/api/recommend",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        resp = urllib.request.urlopen(req)
+        segments = json.loads(resp.read().decode())
 
-        # TODO: Implement Twelve Labs API call
-        # Example: client.generate.text(video_id=..., prompt=prompt)
+        results = []
+        for seg in segments:
+            results.append({
+                "video_id": seg["video_id"],
+                "video_title": seg.get("video_title", "Unknown"),
+                "start": seg["start"],
+                "end": seg["end"],
+                "score": f"{seg['score'] * 100:.0f}%",
+            })
 
-        result = f"Twelve Labs analysis placeholder for prompt: {prompt}"
-
-        ctx.ops.set_progress(label="Analysis complete")
-        return {"result": result}
+        return {"segments": results}
 
     def resolve_output(self, ctx):
         outputs = foo.types.Object()
-        outputs.str("result", label="Analysis Result")
+        outputs.list(
+            "segments",
+            foo.types.Object(),
+            label="Similar Segments",
+        )
         return foo.types.Property(outputs)
 
 
 def register(plugin):
-    plugin.register(VideoUnderstandingOperator)
+    plugin.register(FindSimilarSegments)
