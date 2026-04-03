@@ -38,6 +38,3 @@ export function recommend(query: string, videoId?: string, topK = 5): Promise<Se
   });
 }
 
-export function videoStreamUrl(videoId: string): string {
-  return `${BASE}/videos/${videoId}/stream`;
-}

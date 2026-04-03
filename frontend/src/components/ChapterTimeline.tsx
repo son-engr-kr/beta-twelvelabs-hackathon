@@ -4,7 +4,7 @@ interface Props {
   chapters: Chapter[];
   duration: number;
   currentTime: number;
-  onSelect: (chapter: Chapter) => void;
+  onSelect: (chapter: Chapter, index: number) => void;
   activeIndex: number | null;
 }
 
@@ -29,7 +29,7 @@ export default function ChapterTimeline({ chapters, duration, currentTime, onSel
           return (
             <button
               key={i}
-              onClick={() => onSelect(ch)}
+              onClick={() => onSelect(ch, i)}
               className={`absolute top-0 h-full border-r border-gray-900 transition-colors ${
                 isActive
                   ? 'bg-blue-500'
@@ -54,7 +54,7 @@ export default function ChapterTimeline({ chapters, duration, currentTime, onSel
         {chapters.map((ch, i) => (
           <button
             key={i}
-            onClick={() => onSelect(ch)}
+            onClick={() => onSelect(ch, i)}
             className={`flex items-center gap-2 px-3 py-2 rounded text-left text-sm transition-colors ${
               activeIndex === i
                 ? 'bg-blue-900/50 text-blue-300'

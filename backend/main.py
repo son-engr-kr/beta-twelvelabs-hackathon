@@ -7,8 +7,14 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.routers import videos, recommend
+from backend.seed import seed_if_empty
 
 app = FastAPI(title="SegRec API", version="0.1.0")
+
+
+@app.on_event("startup")
+def on_startup():
+    seed_if_empty()
 
 
 @app.exception_handler(Exception)
@@ -29,7 +35,6 @@ app.add_middleware(
 
 app.include_router(videos.router)
 app.include_router(recommend.router)
-
 
 @app.get("/api/status")
 def status():

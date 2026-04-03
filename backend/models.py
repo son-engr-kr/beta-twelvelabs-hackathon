@@ -20,7 +20,7 @@ class VideoMeta(BaseModel):
     title: str
     duration: float | None = None
     thumbnail_url: str | None = None
-    filepath: str | None = None
+    url: str | None = None  # YouTube URL for playback
     tl_video_id: str | None = None  # Twelve Labs video ID
     tl_index_id: str | None = None  # Twelve Labs index ID
 

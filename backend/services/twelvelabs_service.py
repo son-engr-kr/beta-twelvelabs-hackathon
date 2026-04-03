@@ -3,6 +3,7 @@ import os
 import time
 
 from twelvelabs import TwelveLabs
+from twelvelabs.errors import TooManyRequestsError
 
 INDEX_NAME = "segreg-demo"
 
@@ -42,10 +43,10 @@ def get_or_create_index() -> str:
     return index.id
 
 
-def upload_video(index_id: str, filepath: str) -> str:
+def index_video(index_id: str, video_url: str) -> str:
+    """Submit a video URL for indexing and wait until ready."""
     client = _get_client()
-    with open(filepath, "rb") as f:
-        task = client.tasks.create(index_id=index_id, video_file=f)
+    task = client.tasks.create(index_id=index_id, video_url=video_url)
     # Poll until complete
     while True:
         task_status = client.tasks.retrieve(task_id=task.id)
@@ -91,20 +92,23 @@ def generate_chapters(video_id: str) -> list[dict]:
 
 def search_segments(index_id: str, query: str, top_k: int = 5) -> list[dict]:
     client = _get_client()
-    results = client.search.query(
-        index_id=index_id,
-        query_text=query,
-        search_options=["visual", "audio"],
-        group_by="clip",
-        page_limit=top_k,
-    )
+    try:
+        results = client.search.query(
+            index_id=index_id,
+            query_text=query,
+            search_options=["visual", "audio"],
+            group_by="clip",
+            page_limit=top_k,
+        )
+    except TooManyRequestsError as e:
+        raise RuntimeError("Twelve Labs API rate limit exceeded (50 req/day). Try again later.") from e
     segments = []
     for item in results:
         segments.append({
             "tl_video_id": item.video_id,
             "start": item.start,
             "end": item.end,
-            "score": getattr(item, "rank", 0),
+            "score": 1.0 / max(getattr(item, "rank", 1), 1),
             "thumbnail_url": getattr(item, "thumbnail_url", None),
         })
         if len(segments) >= top_k:

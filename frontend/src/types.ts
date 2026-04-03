@@ -3,7 +3,7 @@ export interface VideoMeta {
   title: string;
   duration: number | null;
   thumbnail_url: string | null;
-  filepath: string | null;
+  url: string | null;
   tl_video_id: string | null;
   tl_index_id: string | null;
 }
